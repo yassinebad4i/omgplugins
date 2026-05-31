@@ -1,7 +1,7 @@
 <?php
 /**
- * JSON File Engine
- * Safe reading and writing of JSON data files
+ * JSON File Engine - ENHANCED for Phase 2
+ * Safe reading and writing of JSON data files with helper functions
  */
 
 class JSONEngine {
@@ -76,6 +76,21 @@ class JSONEngine {
     }
     
     /**
+     * Get item by slug
+     */
+    public function getBySlug($filename, $slug) {
+        $items = $this->read($filename);
+        
+        foreach ($items as $item) {
+            if (isset($item['slug']) && $item['slug'] === $slug) {
+                return $item;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
      * Delete item by ID
      */
     public function deleteItem($filename, $id) {
@@ -104,6 +119,94 @@ class JSONEngine {
         $items[] = $data;
         
         return $this->write($filename, $items) ? $data['id'] : false;
+    }
+    
+    /**
+     * Update item by ID
+     */
+    public function updateItem($filename, $id, $data) {
+        $items = $this->read($filename);
+        
+        foreach ($items as &$item) {
+            if (isset($item['id']) && $item['id'] == $id) {
+                $data['id'] = $id;
+                $item = array_merge($item, $data);
+                return $this->write($filename, $items);
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get all items (alias for read)
+     */
+    public function getAll($filename) {
+        return $this->read($filename);
+    }
+    
+    /**
+     * Search items by field
+     */
+    public function search($filename, $field, $query) {
+        $items = $this->read($filename);
+        $query = strtolower(trim($query));
+        
+        return array_filter($items, function($item) use ($field, $query) {
+            if (!isset($item[$field])) {
+                return false;
+            }
+            return strpos(strtolower($item[$field]), $query) !== false;
+        });
+    }
+    
+    /**
+     * Filter items by field value
+     */
+    public function filter($filename, $field, $value) {
+        $items = $this->read($filename);
+        
+        return array_filter($items, function($item) use ($field, $value) {
+            return isset($item[$field]) && $item[$field] === $value;
+        });
+    }
+    
+    /**
+     * Get items by category
+     */
+    public function getByCategory($filename, $category) {
+        return $this->filter($filename, 'category', $category);
+    }
+    
+    /**
+     * Get published items
+     */
+    public function getPublished($filename) {
+        return $this->filter($filename, 'status', 'published');
+    }
+    
+    /**
+     * Check if slug exists
+     */
+    public function slugExists($filename, $slug, $excludeId = null) {
+        $items = $this->read($filename);
+        
+        foreach ($items as $item) {
+            if (isset($item['slug']) && $item['slug'] === $slug) {
+                if ($excludeId === null || $item['id'] != $excludeId) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Count items in file
+     */
+    public function count($filename) {
+        return count($this->read($filename));
     }
 }
 
