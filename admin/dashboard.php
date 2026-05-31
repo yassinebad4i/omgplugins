@@ -3,32 +3,20 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/security.php';
 
 $auth->require();
-$user = $auth->getCurrentUser();
-
 global $json;
 
+$user = $auth->getCurrentUser();
 $apps = $json->read('apps');
 $games = $json->read('games');
 $categories = $json->read('categories');
 
-$totalApps = count($apps);
-$totalGames = count($games);
-$totalCategories = count($categories);
+$appCount = count($apps);
+$gameCount = count($games);
+$publishedApps = count($json->getPublished('apps'));
+$publishedGames = count($json->getPublished('games'));
 
-$latestApps = array_slice($apps, -5);
-$latestGames = array_slice($games, -5);
-
-array_walk($latestApps, function(&$app) {
-    $app['title'] = Security::escape($app['title'] ?? '');
-    $app['version'] = Security::escape($app['version'] ?? '');
-    $app['status'] = Security::escape($app['status'] ?? 'draft');
-});
-
-array_walk($latestGames, function(&$game) {
-    $game['title'] = Security::escape($game['title'] ?? '');
-    $game['version'] = Security::escape($game['version'] ?? '');
-    $game['status'] = Security::escape($game['status'] ?? 'draft');
-});
+$recentApps = array_slice(array_reverse($apps), 0, 5);
+$recentGames = array_slice(array_reverse($games), 0, 5);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -126,54 +114,58 @@ array_walk($latestGames, function(&$game) {
             z-index: 10;
         }
         
-        .header-title {
-            font-size: 1.2rem;
-            font-weight: 700;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
         
-        .header-actions {
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #111827;
+            border: 1px solid #1f2d45;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            min-width: 250px;
+        }
+        
+        .search-box input {
+            background: none;
+            border: none;
+            color: #e8ecf5;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+        }
+        
+        .search-box input::placeholder {
+            color: #6b7fa3;
+        }
+        
+        .header-right {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
         
         .user-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 1rem;
-            background: #1a2235;
-            border-radius: 10px;
-            font-size: 0.9rem;
+            text-align: right;
+            font-size: 0.85rem;
         }
         
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00f0a0, #7c3aed);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: #000;
-        }
-        
-        .logout-btn {
-            padding: 0.5rem 1rem;
-            background: #1f2d45;
+        .user-name {
+            font-weight: 600;
             color: #e8ecf5;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            text-decoration: none;
         }
         
-        .logout-btn:hover {
-            background: #ff8585;
-            color: #fff;
+        .user-role {
+            color: #6b7fa3;
+            font-size: 0.75rem;
         }
         
         .main {
@@ -191,60 +183,48 @@ array_walk($latestGames, function(&$game) {
         }
         
         .stat-card {
-            background: #111827;
+            background: linear-gradient(135deg, rgba(0, 240, 160, 0.1) 0%, rgba(17, 24, 39, 0.5) 100%);
             border: 1px solid #1f2d45;
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 1.5rem;
-            transition: all 0.3s;
-        }
-        
-        .stat-card:hover {
-            border-color: #00f0a0;
-            box-shadow: 0 8px 24px rgba(0, 240, 160, 0.1);
         }
         
         .stat-label {
             color: #6b7fa3;
             font-size: 0.85rem;
-            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00f0a0;
             margin-bottom: 0.5rem;
         }
         
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #fff;
+        .stat-meta {
+            font-size: 0.8rem;
+            color: #6b7fa3;
         }
         
         .section {
             margin-bottom: 2rem;
         }
         
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        
         .section-title {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            color: #fff;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #1f2d45;
         }
         
-        .section-link {
-            color: #00f0a0;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        
-        .section-link:hover {
-            gap: 0.5rem;
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
         }
         
         .table {
@@ -272,8 +252,9 @@ array_walk($latestGames, function(&$game) {
         }
         
         .table td {
-            padding: 1rem;
+            padding: 0.9rem 1rem;
             border-bottom: 1px solid #1f2d45;
+            font-size: 0.9rem;
         }
         
         .table tbody tr:hover {
@@ -282,9 +263,9 @@ array_walk($latestGames, function(&$game) {
         
         .status-badge {
             display: inline-block;
-            padding: 0.35rem 0.75rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -299,17 +280,40 @@ array_walk($latestGames, function(&$game) {
             color: #6b7fa3;
         }
         
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
-            color: #6b7fa3;
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
         }
         
-        .empty-state svg {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 1rem;
-            opacity: 0.5;
+        .btn-action {
+            padding: 0.7rem 1.5rem;
+            background: #00f0a0;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 24px rgba(0, 240, 160, 0.3);
+        }
+        
+        .btn-action-secondary {
+            background: #1a2235;
+            color: #00f0a0;
+            border: 1px solid #1f2d45;
+        }
+        
+        .btn-action-secondary:hover {
+            border-color: #00f0a0;
         }
         
         @media (max-width: 768px) {
@@ -330,13 +334,20 @@ array_walk($latestGames, function(&$game) {
             .sidebar-nav a {
                 flex: 1 1 auto;
                 min-width: 150px;
+                font-size: 0.8rem;
             }
             
             .header {
                 left: 0;
-                margin-top: auto;
                 flex-direction: column;
                 gap: 1rem;
+                height: auto;
+                padding: 1rem;
+            }
+            
+            .search-box {
+                min-width: auto;
+                width: 100%;
             }
             
             .main {
@@ -346,6 +357,10 @@ array_walk($latestGames, function(&$game) {
             }
             
             .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .content-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -373,6 +388,27 @@ array_walk($latestGames, function(&$game) {
                 </svg>
                 Apps Management
             </a>
+            <a href="/admin/games.php">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect>
+                    <path d="M6 12h12M6 16h12M6 8h12"></path>
+                </svg>
+                Games Management
+            </a>
+            <a href="/admin/categories.php">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Categories
+            </a>
+            <a href="/admin/media.php">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                Media
+            </a>
             <a href="/admin/logout.php">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -385,13 +421,22 @@ array_walk($latestGames, function(&$game) {
     </aside>
     
     <header class="header">
-        <h1 class="header-title">Dashboard</h1>
-        <div class="header-actions">
-            <div class="user-info">
-                <div class="user-avatar"><?php echo strtoupper(substr($user['username'], 0, 1)); ?></div>
-                <span><?php echo Security::escape($user['username']); ?></span>
+        <div class="header-left">
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <form action="/admin/search.php" method="GET" style="width: 100%;">
+                    <input type="text" name="q" placeholder="Search apps and games..." autocomplete="off">
+                </form>
             </div>
-            <a href="/admin/logout.php" class="logout-btn">Logout</a>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <div class="user-name"><?php echo Security::escape($user['username']); ?></div>
+                <div class="user-role">Administrator</div>
+            </div>
         </div>
     </header>
     
@@ -399,99 +444,85 @@ array_walk($latestGames, function(&$game) {
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Total Apps</div>
-                <div class="stat-value"><?php echo $totalApps; ?></div>
+                <div class="stat-number"><?php echo $appCount; ?></div>
+                <div class="stat-meta"><?php echo $publishedApps; ?> published</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Total Games</div>
-                <div class="stat-value"><?php echo $totalGames; ?></div>
+                <div class="stat-number"><?php echo $gameCount; ?></div>
+                <div class="stat-meta"><?php echo $publishedGames; ?> published</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Categories</div>
-                <div class="stat-value"><?php echo $totalCategories; ?></div>
+                <div class="stat-number"><?php echo count($categories); ?></div>
+                <div class="stat-meta">Organized content</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Status</div>
+                <div class="stat-number" style="color: #00ff00;">✓</div>
+                <div class="stat-meta">System operational</div>
             </div>
         </div>
         
-        <div class="section">
-            <div class="section-header">
-                <h2 class="section-title">Latest Apps</h2>
-                <a href="/admin/apps.php" class="section-link">View All →</a>
-            </div>
-            
-            <?php if (count($latestApps) > 0): ?>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Version</th>
-                            <th>Status</th>
-                            <th>Added</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach (array_reverse($latestApps) as $app): ?>
-                            <tr>
-                                <td><?php echo $app['title']; ?></td>
-                                <td><?php echo $app['version']; ?></td>
-                                <td>
-                                    <span class="status-badge status-<?php echo $app['status']; ?>">
-                                        <?php echo ucfirst($app['status']); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo Security::escape($app['published_at'] ?? 'N/A'); ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <div class="empty-state">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                        <polyline points="13 2 13 9 20 9"></polyline>
-                    </svg>
-                    <p>No apps yet. <a href="/admin/apps.php" class="section-link">Add your first app</a></p>
-                </div>
-            <?php endif; ?>
+        <div class="quick-actions">
+            <a href="/admin/add-app.php" class="btn-action">+ Add App</a>
+            <a href="/admin/add-game.php" class="btn-action">+ Add Game</a>
+            <a href="/admin/categories.php" class="btn-action btn-action-secondary">Manage Categories</a>
+            <a href="/admin/media.php" class="btn-action btn-action-secondary">Upload Media</a>
         </div>
         
-        <div class="section">
-            <div class="section-header">
-                <h2 class="section-title">Latest Games</h2>
+        <div class="content-grid">
+            <div class="section">
+                <h2 class="section-title">Recent Apps</h2>
+                <?php if (count($recentApps) > 0): ?>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Version</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($recentApps as $app): ?>
+                                <tr>
+                                    <td><strong><?php echo Security::escape($app['title']); ?></strong></td>
+                                    <td><?php echo Security::escape($app['version']); ?></td>
+                                    <td><span class="status-badge status-<?php echo $app['status']; ?>"><?php echo ucfirst($app['status']); ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p style="color: #6b7fa3; text-align: center; padding: 2rem;">No apps yet. <a href="/admin/add-app.php" style="color: #00f0a0; text-decoration: none;">Create one</a></p>
+                <?php endif; ?>
             </div>
             
-            <?php if (count($latestGames) > 0): ?>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Version</th>
-                            <th>Status</th>
-                            <th>Added</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach (array_reverse($latestGames) as $game): ?>
+            <div class="section">
+                <h2 class="section-title">Recent Games</h2>
+                <?php if (count($recentGames) > 0): ?>
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td><?php echo $game['title']; ?></td>
-                                <td><?php echo $game['version']; ?></td>
-                                <td>
-                                    <span class="status-badge status-<?php echo $game['status']; ?>">
-                                        <?php echo ucfirst($game['status']); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo Security::escape($game['published_at'] ?? 'N/A'); ?></td>
+                                <th>Title</th>
+                                <th>Version</th>
+                                <th>Status</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <div class="empty-state">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                        <polyline points="13 2 13 9 20 9"></polyline>
-                    </svg>
-                    <p>No games yet.</p>
-                </div>
-            <?php endif; ?>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($recentGames as $game): ?>
+                                <tr>
+                                    <td><strong><?php echo Security::escape($game['title']); ?></strong></td>
+                                    <td><?php echo Security::escape($game['version']); ?></td>
+                                    <td><span class="status-badge status-<?php echo $game['status']; ?>"><?php echo ucfirst($game['status']); ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p style="color: #6b7fa3; text-align: center; padding: 2rem;">No games yet. <a href="/admin/add-game.php" style="color: #00f0a0; text-decoration: none;">Create one</a></p>
+                <?php endif; ?>
+            </div>
         </div>
     </main>
 </body>
