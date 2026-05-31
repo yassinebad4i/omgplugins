@@ -4,8 +4,7 @@
  * Handles slug-based routing for apps and games
  */
 
-require_once __DIR__ . '/includes/frontend.php';
-require_once __DIR__ . '/includes/security.php';
+require_once __DIR__ . '/frontend.php';
 
 class Router {
     private $json;
