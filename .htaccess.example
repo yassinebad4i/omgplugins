@@ -1,0 +1,21 @@
+# Copy this file to .htaccess if you're using Apache
+# This enables clean URLs for app and game detail pages
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Remove trailing slashes
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)/$ /$1 [L,R=301]
+    
+    # App routing - /app/slug.php -> /app/detail.php?slug=slug
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^app/([a-z0-9-]+)\.php$ /app/detail.php?slug=$1 [QSA,L]
+    
+    # Game routing - /game/slug.php -> /game/detail.php?slug=slug
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^game/([a-z0-9-]+)\.php$ /game/detail.php?slug=$1 [QSA,L]
+</IfModule>

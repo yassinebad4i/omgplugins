@@ -1,0 +1,25 @@
+# Data files (contain user data)
+data/*.json
+
+# Upload directories
+uploads/images/*
+uploads/screenshots/*
+
+# Session files
+*.sess
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# System
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+error_log
